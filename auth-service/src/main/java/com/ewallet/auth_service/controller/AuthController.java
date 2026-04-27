@@ -21,14 +21,13 @@ import java.util.Optional;
 
 public class AuthController {
 
-    @Autowired
     private final AuthService authService;
     private final UserRepository userRepository;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request){
         if (userRepository.existsByEmail(request.getEmail())){
-            return ResponseEntity.status(HttpStatus.ALREADY_REPORTED).body("User with this Email ID already exists");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User with this Email ID already exists");
         }
         AuthResponse response=authService.register(request);
         return ResponseEntity.ok(response);

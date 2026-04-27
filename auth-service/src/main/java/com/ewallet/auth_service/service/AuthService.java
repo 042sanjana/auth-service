@@ -1,28 +1,26 @@
 package com.ewallet.auth_service.service;
 
+import com.ewallet.auth_service.config.RabbitMQConfig;
 import com.ewallet.auth_service.dto.AuthResponse;
 import com.ewallet.auth_service.dto.LoginRequest;
 import com.ewallet.auth_service.dto.RegisterRequest;
 import com.ewallet.auth_service.entity.User;
 import com.ewallet.auth_service.event.UserEvent;
+import com.ewallet.auth_service.event.WalletEvent;
 import com.ewallet.auth_service.repository.UserRepository;
 import com.ewallet.auth_service.util.JwtUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import java.security.Principal;
-
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    @Autowired
+
     private final UserRepository userRepository;
-    @Autowired
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RabbitTemplate rabbitTemplate;
@@ -31,30 +29,33 @@ public class AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");
         }
-
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .phoneNo(request.getPhoneNumber())
+                .dateOfBirth(request.getDateOfBirth())
                 .role(User.Role.USER)
                 .build();
-
         userRepository.save(user);
 
-        UserEvent event = new UserEvent(
-                user.getId(),
-                request.getEmail(),
-                request.getFullName(),
-                request.getPhoneNumber()
-        );
+        String token = jwtUtil.generateToken(user.getId(),user.getEmail(), user.getRole().name());
 
-        try {
-            rabbitTemplate.convertAndSend("user.exchange", "user.routing", event);
-            System.out.println("Message sent to RabbitMQ");
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
+        UserEvent event = new UserEvent(user.getId(), user.getEmail(), user.getFullName(), user.getPhoneNo(), user.getDateOfBirth());
+        WalletEvent walletEvent = new WalletEvent(user.getId(), user.getEmail());
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE,
+                RabbitMQConfig.USER_ROUTING_KEY,
+                event);
+        log.info("Published to user service for  email: {}", event.getEmail());
+
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE,
+                RabbitMQConfig.WALLET_ROUTING_KEY,
+                walletEvent);
+        log.info("Published to wallet service for email: {}", walletEvent.getEmail());
 
         return new AuthResponse(token, user.getEmail(), user.getRole().name());
     }
@@ -67,10 +68,8 @@ public class AuthService {
             throw new RuntimeException("Invalid email or password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        String token = jwtUtil.generateToken(user.getId(),user.getEmail(), user.getRole().name());
 
         return new AuthResponse(token, user.getEmail(), user.getRole().name());
     }
-
-
 }

@@ -2,6 +2,9 @@ package com.ewallet.auth_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 
 @Entity
 @Table(name="auth_users")
@@ -20,7 +23,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    private String fullName;
 
+    private Date dateOfBirth;
+    private BigDecimal phoneNo;
 
     @Enumerated(EnumType.STRING)
     private Role role;

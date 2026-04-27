@@ -47,7 +47,7 @@ public class AuthServicetest {
             u.setId(1L);
             return u;
         });
-        when(jwtUtil.generateToken("2712vinayreddy30@gmail.com", "USER")).thenReturn("mock-jwt-token");
+        when(jwtUtil.generateToken(1L,"2712vinayreddy30@gmail.com", "USER")).thenReturn("mock-jwt-token");
 
         var response = authService.register(request);
 

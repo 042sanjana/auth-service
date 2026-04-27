@@ -13,10 +13,11 @@ public class RabbitMQConfig {
 
     public static final String EXCHANGE = "ewallet.exchange";
 
-
+    // Queues
     public static final String USER_QUEUE   = "user.registered.queue";
     public static final String WALLET_QUEUE = "wallet.registered.queue";
 
+    // Routing Keys
     public static final String USER_ROUTING_KEY   = "user.registered";
     public static final String WALLET_ROUTING_KEY = "wallet.registered";
 
