@@ -5,6 +5,7 @@ import com.ewallet.auth_service.dto.AuthResponse;
 import com.ewallet.auth_service.dto.LoginRequest;
 import com.ewallet.auth_service.dto.RegisterRequest;
 import com.ewallet.auth_service.entity.User;
+import com.ewallet.auth_service.event.NotificationEvent;
 import com.ewallet.auth_service.event.UserEvent;
 import com.ewallet.auth_service.event.WalletEvent;
 import com.ewallet.auth_service.repository.UserRepository;
@@ -43,6 +44,7 @@ public class AuthService {
 
         UserEvent event = new UserEvent(user.getId(), user.getEmail(), user.getFullName(), user.getPhoneNo(), user.getDateOfBirth());
         WalletEvent walletEvent = new WalletEvent(user.getId(), user.getEmail());
+        NotificationEvent notificationEvent=new NotificationEvent(user.getId(),user.getEmail(), user.getFullName());
 
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE,
@@ -56,6 +58,13 @@ public class AuthService {
                 RabbitMQConfig.WALLET_ROUTING_KEY,
                 walletEvent);
         log.info("Published to wallet service for email: {}", walletEvent.getEmail());
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE,
+                RabbitMQConfig.NOTIFICATION_ROUTING_KEY,
+                notificationEvent
+        );
+        log.info("Published to notification service for email: {}", walletEvent.getEmail());
 
         return new AuthResponse(token, user.getEmail(), user.getRole().name());
     }

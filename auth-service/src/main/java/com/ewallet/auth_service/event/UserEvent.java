@@ -11,7 +11,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserEvent implements Serializable {
+public class UserEvent{
     private Long userId;
     private String email;
     private String fullName;
