@@ -16,12 +16,10 @@ public class RabbitMQConfig {
     // Queues
     public static final String USER_QUEUE   = "user.registered.queue";
     public static final String WALLET_QUEUE = "wallet.registered.queue";
-    public  static final String NOTIFICATION_QUEUE="notification.registered.queue";
 
     // Routing Keys
     public static final String USER_ROUTING_KEY   = "user.registered";
     public static final String WALLET_ROUTING_KEY = "wallet.registered";
-    public static final String NOTIFICATION_ROUTING_KEY="notification.registered";
 
     @Bean
     public DirectExchange ewalletExchange() {
@@ -38,10 +36,6 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(WALLET_QUEUE).build();
     }
 
-    @Bean
-    public Queue notificationQueue(){
-        return  QueueBuilder.durable(NOTIFICATION_QUEUE).build();
-    }
 
     @Bean
     public Binding userBinding(Queue userQueue, DirectExchange ewalletExchange) {
@@ -59,13 +53,6 @@ public class RabbitMQConfig {
                 .with(WALLET_ROUTING_KEY);
     }
 
-    @Bean
-    public Binding notificationBinding(Queue notificationQueue, DirectExchange ewalletExchange){
-        return BindingBuilder
-                .bind(notificationQueue)
-                .to(ewalletExchange)
-                .with(NOTIFICATION_ROUTING_KEY);
-    }
 
     @Bean
     public MessageConverter jsonMessageConverter() {
